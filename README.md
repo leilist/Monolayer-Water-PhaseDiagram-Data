@@ -7,8 +7,11 @@ This repository contains supplementary data supporting results of the paper:
 Bo Lin, Jian Jiang, Xiao Cheng Zeng, Lei Li
 
 ## License
-The content of this repository is licensed under the CC-BY-SA-4.0 license. See the file
-`LICENSE` for details.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0 
+See the file `LICENSE` for details.
 
 ## Contents
 * `aimd_cp2k`:
