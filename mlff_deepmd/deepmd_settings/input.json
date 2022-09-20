@@ -1,0 +1,103 @@
+{
+    "model": {
+        "type_map": [
+            "H",
+            "O"
+        ],
+        "descriptor": {
+            "type": "se_e2_a",
+            "sel": [
+                500,
+                500
+            ],
+            "rcut_smth": 1.0,
+            "rcut": 9.0,
+            "neuron": [
+                25,
+                50,
+                100
+            ],
+            "resnet_dt": false,
+            "axis_neuron": 16,
+            "seed": 315,
+            "activation_function": "tanh",
+            "type_one_side": false,
+            "precision": "float64",
+            "trainable": true,
+            "exclude_types": [],
+            "set_davg_zero": false
+        },
+        "fitting_net": {
+            "neuron": [
+                240
+            ],
+            "resnet_dt": true,
+            "seed": 16,
+            "type": "ener",
+            "numb_fparam": 0,
+            "numb_aparam": 0,
+            "activation_function": "tanh",
+            "precision": "float64",
+            "trainable": true,
+            "rcond": 0.001,
+            "atom_ener": []
+        },
+        "data_stat_nbatch": 10,
+        "data_stat_protect": 0.01
+    },
+    "learning_rate": {
+        "type": "exp",
+        "decay_steps": 5000,
+        "start_lr": 0.001,
+        "stop_lr": 3.51e-08
+    },
+    "loss": {
+        "type": "ener",
+        "start_pref_e": 0.2,
+        "limit_pref_e": 2,
+        "start_pref_f": 1000,
+        "limit_pref_f": 0.1,
+        "start_pref_v": 0,
+        "limit_pref_v": 0,
+        "start_pref_ae": 0.0,
+        "limit_pref_ae": 0.0
+    },
+    "training": {
+
+        "numb_steps": 10,
+        "seed": 517,
+        "disp_file": "lcurve.out",
+        "disp_freq": 1,
+        "save_freq": 1,
+        "numb_test": "25%",
+        "save_ckpt": "model.ckpt",
+        "disp_training": true,
+        "time_training": true,
+        "profiling": false,
+        "profiling_file": "timeline.json",
+        "tensorboard": false,
+        "tensorboard_log_dir": "log",
+        "tensorboard_freq": 1,
+
+        "training_data": {
+            "systems": [
+                "./database/108/",
+                "./database/48/",
+                "./database/96/",
+                "./database/576/",
+                "./database/72/",
+                "./database/24/",
+                "./database/36/",
+                "./database/12/",
+                "./database/192/",
+                "./database/288/",
+                "./database/144/"
+            ],
+            "batch_size": "auto",
+            "set_prefix": "set",
+            "auto_prob": "prob_sys_size",
+            "sys_probs": null
+        }
+    }
+}
+
