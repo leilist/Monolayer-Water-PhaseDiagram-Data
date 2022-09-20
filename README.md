@@ -10,15 +10,13 @@ Bo Lin, Jian Jiang, Xiao Cheng Zeng, Lei Li
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-       http://www.apache.org/licenses/LICENSE-2.0 
+       http://www.apache.org/licenses/LICENSE-2.0  
 See the file `LICENSE` for details.
 
 ## Contents
 * `aimd_cp2k`:
-Inputs and examples for the ab initio molecular dynamics (AIMD) simulations by cp2k.
-
-This directory contains AIMD examples of main 2D ices in NVT ensembles by cp2k.
-
+Inputs and examples for the ab initio molecular dynamics (AIMD) simulations by cp2k.  
+This directory contains AIMD examples of main 2D ices in NVT ensembles by cp2k.  
 BASIS_MOLOPT, GTH_POTENTIALS and vdW_kernel_table.dat can be found in the 'data' directory of the cp2k source code.
 
 * `env`:
@@ -40,10 +38,10 @@ The executable LAMMPS pre-compiled in the DeePMD-kit is used.
 Examples of AIMD simulations used to confirm the MLFF-MD results
 
 * `mlff_deepmd`:
-ref_data_collection: scripts used to collect training data
-train_test_data: reference data used to develop the MLFF model (MLFF energies are also included. See readme.txt for details) 
-deepmd_settings: DeePMD setting files used to train the MLFF model of the 2D water.
-deepmd_model: the developed MLFF model of the 2D water.
+ - ref_data_collection: scripts used to collect training data.
+ - train_test_data: reference data used to develop the MLFF model (MLFF energies are also included. See readme.txt for details).
+ - deepmd_settings: DeePMD setting files used to train the MLFF model of the 2D water.
+ - deepmd_model: the developed MLFF model of the 2D water.
 
 * `npt_lammps`:
 Examples of MD simulations with the NPT ensemble using the LAMMPS in DeePMD-kit based on the MLFF model.
