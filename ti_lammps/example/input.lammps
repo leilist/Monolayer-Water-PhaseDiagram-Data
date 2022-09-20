@@ -1,0 +1,230 @@
+# created by B.Lin 2022
+
+# ------------------------ Initialization ---------------------------- #
+units           metal
+dimension       3
+boundary        p p f
+atom_style      atomic
+processors      * * 1
+# -------------------------------------------------------------------- #
+
+# ----------------------- Atom definition ---------------------------- #
+read_data       lammps.data
+
+mass            1 1.008     # H
+mass            2 15.999    # O
+# -------------------------------------------------------------------- #
+
+# ----------------------- Force fields ------------------------------- #
+pair_style      deepmd model.pb   # 1 H 2 O
+pair_coeff
+
+neighbor        2 bin
+neigh_modify    every 1 delay 10 check yes # these are default
+# -------------------------------------------------------------------- #
+
+# ------------------------- System settings -------------------------- #
+variable        wallzlo equal 0
+variable        wallzhi equal 6.0
+variable        Tstart equal 100
+variable        Tstop equal 100
+variable        Piso equal 30000
+# -------------------------------------------------------------------- #
+
+# ------------------- Initialized settings --------------------------- #
+reset_timestep  0
+
+# Initalizes random number generator
+variable        RANDOM equal 126387
+variable        rnd equal round(random(0,999999,${RANDOM}))
+# thermodynamic variables
+variable        dt_timestep equal 0.001
+variable        run_steps equal 10000
+
+variable        g_t equal temp
+variable        g_ke equal ke
+variable        g_pe equal pe
+variable        g_lx equal lx
+variable        g_ly equal ly
+variable        g_pxx equal pxx
+variable        g_pyy equal pyy
+
+group           Hatom type 1
+group           Oatom type 2
+
+timestep        ${dt_timestep}
+
+thermo          1
+thermo_style    custom step time atoms temp ke pe etotal press lx ly lz vol density pxx pyy
+
+# fix COM
+fix             xx all momentum 1 linear 1 1 1 angular
+# add wall/lj93
+fix             wallLj93zlo Oatom wall/lj93 zlo ${wallzlo} 0.1627 3.853 10 units box pbc no
+fix             wallLj93zhi Oatom wall/lj93 zhi ${wallzhi} 0.1627 3.853 10 units box pbc no
+# compute msd
+compute         msd all msd com yes
+compute         msdH Hatom msd com yes
+compute         msdO Oatom msd com yes
+variable        msd equal c_msd[4]
+variable        msdH equal c_msdH[4]
+variable        msdO equal c_msdO[4]
+# Compute temperature after subtracting out center-of-mass
+compute         tcom all temp/com
+# -------------------------------------------------------------------- #
+
+# ----------------------- Equilibration ------------------------------ #
+variable        dumpFreq equal 1000
+variable        eqSteps equal 20000
+variable        aveSteps equal 10000
+
+fix             gp all print 1                                               &
+                "${g_t} ${g_ke} ${g_pe} ${g_lx} ${g_ly} ${g_pxx} ${g_pyy}"  &
+                file thermo_init.txt title "# temp ke pe lx ly pxx pyy" screen no
+
+dump            xyz all xyz ${dumpFreq} xyz.init
+dump_modify     xyz sort id element H O
+dump            custom all custom ${dumpFreq} dump.init id type x y z element
+dump_modify     custom sort id element H O
+
+# Initial temperature to accelerate equilibration.
+variable        T0  equal 0.7*${Tstart}     # Initial temperature.
+variable        rnd equal round(random(0,999999,${RANDOM}))
+velocity        all create ${T0} ${rnd} mom yes rot yes dist gaussian # or dist uniform
+
+fix             npt all npt temp 50 ${Tstart} $(100.0*dt) x ${Piso} ${Piso} $(1000.0*dt) y ${Piso} ${Piso} $(1000.0*dt) couple xy drag 2 mtk yes
+run             50000
+unfix           npt
+
+reset_timestep  0
+variable        rnd equal round(random(0,999999,${RANDOM}))
+fix             fp all nph x ${Piso} ${Piso} $(1000.0*dt) y ${Piso} ${Piso} $(1000.0*dt) drag 2 mtk yes
+fix             ft all langevin ${Tstart} ${Tstart} $(100.0*dt) ${rnd} zero yes
+fix_modify      ft temp tcom
+run             ${aveSteps}
+unfix           fp
+unfix           ft
+
+fix             ave all ave/time 1 ${aveSteps} ${eqSteps} v_g_lx v_g_ly
+variable        rnd equal round(random(0,999999,${RANDOM}))
+fix             fp all nph x ${Piso} ${Piso} $(1000.0*dt) y ${Piso} ${Piso} $(1000.0*dt) drag 2 mtk yes
+fix             ft all langevin ${Tstart} ${Tstart} $(100.0*dt) ${rnd} zero yes
+fix_modify      ft temp tcom
+run             ${eqSteps}
+variable        avelx equal f_ave[1] # lx
+variable        avely equal f_ave[2] # ly
+
+change_box      all x final 0 ${avelx} y final 0 ${avely} remap units box
+
+unfix           ave
+unfix           fp
+unfix           ft
+
+undump          xyz
+undump          custom
+unfix           gp
+# -------------------------------------------------------------------- #
+
+# ------------------------------- msd -------------------------------- #
+reset_timestep  0
+
+variable        dumpFreq equal 1000
+variable        eqSteps equal 20000
+variable        aveSteps equal 10000
+
+dump            xyz all xyz ${dumpFreq} xyz.msd
+dump_modify     xyz sort id element H O
+dump            custom all custom ${dumpFreq} dump.msd id type x y z element
+dump_modify     custom sort id element H O
+
+fix     gp all print 1                                               &
+        "${g_t} ${g_ke} ${g_pe} ${g_lx} ${g_ly} ${g_pxx} ${g_pyy} ${msd} ${msdH} ${msdO}"  &
+        file thermo_msd.txt title "# temp ke pe lx ly pxx pyy msd msdH msdO" screen no
+
+# compute msd
+variable        rnd equal round(random(0,999999,${RANDOM}))
+fix             ave all ave/time 1 ${aveSteps} ${eqSteps} v_msd v_msdH v_msdO
+fix             fv all nve
+fix             ft all langevin ${Tstart} ${Tstart} $(100.0*dt) ${rnd} zero yes
+fix_modify      ft temp tcom
+run             ${eqSteps}
+unfix           fv
+unfix           ft
+variable        avemsd  equal f_ave[1] # msd
+variable        avemsdH equal f_ave[2] # msdH
+variable        avemsdO equal f_ave[3] # msdO
+print           "${avemsd} ${avemsdH} ${avemsdO}" file msd.info
+
+# spring k = 3*k_B*T/msd
+# variable kB equal 1.3806504e-23 # [J/K] Boltzmann
+# variable eV equal 1.602176634e-19 # [J]
+# variable k equal "3*${Tstart}*${kB}/${eV}/${avemsd}"
+
+variable        kB equal 8.6173324E-5 # in the units of [eV/K]
+variable        kspring equal 3*100*${Tstart}*${kB}/${avemsd}
+print           "${kspring}" append msd.info
+
+unfix           ave
+undump          xyz
+undump          custom
+unfix           gp
+# -------------------------------------------------------------------- #
+
+# ----- settings of thermodynamic integrate from Einstein crystal -----#
+reset_timestep  0
+
+# settings of Thermostat and Frenkel-Ladd fix.
+variable        func   equal 2          # Integration function.
+variable        rnd    equal round(random(0,999999,${RANDOM}))
+variable        t_eq   equal 50000      # Equilibration time.
+variable        t_me   equal 200000     # Simulation time.
+variable        dumpFreq equal 1000
+
+fix             fv all nve
+fix             fe all ti/spring ${kspring} ${t_me} ${t_eq} function ${func}
+fix             ft all langevin ${Tstart} ${Tstart} $(100.0*dt) ${rnd} zero yes
+fix_modify      ft temp tcom
+
+# Setup output varibles
+variable        step    equal step
+variable        dU      equal pe-f_fe
+variable        lambda  equal f_fe[1]
+variable        dlambda equal f_fe[2]
+
+# Print correctly on fix print.
+variable        t_eq_run  equal ${t_eq}-1
+variable        t_me_run  equal ${t_me}+1
+
+fix     gp all print 1                                               &
+        "${g_t} ${g_ke} ${g_pe} ${g_lx} ${g_ly} ${g_pxx} ${g_pyy} ${msd} ${msdH} ${msdO}"  &
+        file thermo_ti.txt title "# temp ke pe lx ly pxx pyy msd msdH msdO" screen no
+
+dump            xyz all xyz ${dumpFreq} xyz.ti
+dump_modify     xyz sort id element H O
+dump            custom all custom ${dumpFreq} dump.ti id type x y z element
+dump_modify     custom sort id element H O
+# -------------------------------------------------------------------- #
+
+#---------------------- run Einstein crystl ti ------------------------#
+  # Forward integration.
+  run               ${t_eq_run}
+  fix               f4 all print 1                               &
+                    "${step} ${dU} ${lambda} ${dlambda}"         &
+                    screen no file ti.forward.dat                &
+                    title "# step dU lambda dlambda"
+  run               ${t_me_run}
+  unfix             f4
+
+  # Backward integration.
+  run               ${t_eq_run}
+  fix               f4 all print 1                                &
+                    "${step} ${dU} ${lambda} ${dlambda}"          &
+                    screen no file ti.backward.dat                &
+                    title "# step dU lambda dlambda"
+  run               ${t_me_run}
+  unfix             f4
+# -------------------------------------------------------------------- #
+
+# ------------------------------- End -------------------------------- #
+# -------------------------------------------------------------------- #
+

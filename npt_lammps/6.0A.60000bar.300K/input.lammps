@@ -1,0 +1,102 @@
+# created by B.Lin 2021
+
+# ------------------------ Initialization ---------------------------- #
+units           metal
+dimension       3
+boundary        p p f
+atom_style      atomic
+processors      * * 1
+# -------------------------------------------------------------------- #
+
+# ----------------------- Atom definition ---------------------------- #
+include         data.mod
+# -------------------------------------------------------------------- #
+
+# ----------------------- Force fields ------------------------------- #
+include         pot.mod
+
+neighbor        2 bin
+neigh_modify    every 10 delay 0 check no
+
+# delete_atoms    overlap 0.25 all all compress yes
+# -------------------------------------------------------------------- #
+
+# ------------------- Initialized settings --------------------------- #
+variable        dt_timestep equal 0.001
+variable        run_steps equal 1000000
+variable        run_steps_init equal 100000
+variable        run_steps_trans equal 1000000
+
+fix             xx all momentum 1 linear 1 1 1 angular
+# -------------------------------------------------------------------- #
+
+# ----------------------- Equilibration ------------------------------ #
+reset_timestep  0
+
+timestep        ${dt_timestep}
+
+group           Hatom type 1
+group           Oatom type 2
+
+include         wall.mod
+fix             wallLj93zlo Oatom wall/lj93 zlo ${wallzlo} 0.1627 3.853 10 units box pbc no
+fix             wallLj93zhi Oatom wall/lj93 zhi ${wallzhi} 0.1627 3.853 10 units box pbc no
+
+# compute msd
+compute         msd all msd com yes
+compute         msdH Hatom msd com yes
+compute         msdO Oatom msd com yes
+variable        msd equal c_msd[4]
+variable        msdH equal c_msdH[4]
+variable        msdO equal c_msdO[4]
+# Compute temperature after subtracting out center-of-mass
+compute         tcom all temp/com
+
+# global ouput
+thermo          1
+thermo_style    custom step atoms temp c_tcom ke pe etotal press lx ly lz vol density pxx pyy v_msdH v_msdO v_msd
+
+# define output variable
+variable        g_step equal step
+variable        g_t equal temp
+variable        g_ke equal ke
+variable        g_pe equal pe
+variable        g_lx equal lx
+variable        g_ly equal ly
+variable        g_pxx equal pxx
+variable        g_pyy equal pyy
+variable        g_etotal equal etotal
+variable        g_enthalpy equal enthalpy
+
+# define global thermo output every steps
+fix             gp all print 1                                                  &
+                "${g_step} ${g_t} ${g_ke} ${g_pe} ${g_lx} ${g_ly} ${g_pxx} ${g_pyy} ${msdH} ${msdO} ${msd}" &
+                file thermoinfo.txt title "# step temp ke pe lx ly pxx pyy etotal enthalpy msdH msdO msd" screen no
+
+
+include         temp.mod
+include         pressure.mod
+
+dump            xyz all xyz 1000 water2d.xyz
+dump_modify     xyz element H O sort id
+
+dump            custom all custom 1000 custom.dump id type x y z element vx vy vz
+dump_modify     custom sort id element H O
+# -------------------------------------------------------------------- #
+
+# ----------------------- Equilibration ------------------------------ #
+fix             npt all npt temp ${T1} ${T1} $(100.0*dt) x 10 60000 $(1000.0*dt) y 10 60000 $(1000.0*dt) couple xy drag 2 mtk yes
+run             6000000
+unfix           npt
+write_data      data.load
+
+#fix             npt all npt temp ${T0} ${T1} $(100.0*dt) x ${P0} ${P0} $(1000.0*dt) y ${P0} ${P0} $(1000.0*dt) couple xy drag 2 mtk yes
+#run             ${run_steps_init}
+#unfix           npt
+#write_data      data.cool.0
+#write_restart   restart.cool.0
+# -------------------------------------------------------------------- #
+
+# ------------------------------- End -------------------------------- #
+# -------------------------------------------------------------------- #
+
