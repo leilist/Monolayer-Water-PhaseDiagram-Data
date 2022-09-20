@@ -19,20 +19,19 @@ Inputs and examples for the ab initio molecular dynamics (AIMD) simulations by c
 This directory contains AIMD examples of main 2D ices in NVT ensembles by cp2k.  
 BASIS_MOLOPT, GTH_POTENTIALS and vdW_kernel_table.dat can be found in the 'data' directory of the cp2k source code.
 
-* `env`:
-Environments and version information for cp2k, DeePMD-kit and LAMMPS.
-
+* `env`:  
+Environments and version information for cp2k, DeePMD-kit and LAMMPS.  
 **DeePMD-kit**
-https://github.com/deepmodeling/deepmd-kit/releases/tag/v2.0.1
-The released file deepmd-kit-2.0.1-cuda11.3_gpu-Linux-x86_64.sh is used for installation 
+https://github.com/deepmodeling/deepmd-kit/releases/tag/v2.0.1  
+The released file deepmd-kit-2.0.1-cuda11.3_gpu-Linux-x86_64.sh is used for installation  
 
 **cp2k**
-https://www.cp2k.org/
-cp2k-9.1 is used. The environment settings can be found in the file 'cp2k.setup'.
+https://www.cp2k.org/  
+cp2k-9.1 is used. The environment settings can be found in the file 'cp2k.setup'.  
 
 **LAMMPS**
-https://www.lammps.org/
-The executable LAMMPS pre-compiled in the DeePMD-kit is used.
+https://www.lammps.org/  
+The executable LAMMPS pre-compiled in the DeePMD-kit is used.  
 
 * `aimd_cp2k`:
 Examples of AIMD simulations used to confirm the MLFF-MD results
