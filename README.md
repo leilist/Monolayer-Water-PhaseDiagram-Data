@@ -35,8 +35,7 @@ The executable LAMMPS pre-compiled in the DeePMD-kit is used.
 Examples of AIMD simulations used to confirm the MLFF-MD results
 
 * `mlff_deepmd`:  
-ref_data_collection: scripts used to collect training data.  
-train_test_data: reference data used to develop the MLFF model (MLFF energies are also included. See readme.txt for details).  
+ref_data_collection: scripts used to collect training data. Training and testing data are not included yet due to difficulty on uploading large files. Please email author if needed.  
 deepmd_settings: DeePMD setting files used to train the MLFF model of the 2D water.  
 deepmd_model: the developed MLFF model of the 2D water.  
 
