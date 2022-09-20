@@ -1,0 +1,179 @@
+ &GLOBAL
+   PRINT_LEVEL  LOW #HIGH !!!!!!!!!!!!!!!!!!!!!!!!!
+   PROJECT_NAME test #2dwater !!!!!!!!!!!!!
+   RUN_TYPE     MD
+ &END GLOBAL
+ 
+ 
+ &MOTION
+   &FREE_ENERGY
+     &METADYN
+       USE_PLUMED .TRUE.
+       PLUMED_INPUT_FILE ./ciplumed.inp
+     &END METADYN
+   &END FREE_ENERGY
+   &PRINT LOW
+     &RESTART
+       &EACH
+         MD      1
+       &END EACH
+     &END RESTART
+     &TRAJECTORY LOW
+     &END TRAJECTORY
+     &VELOCITIES LOW
+     &END VELOCITIES
+     &CELL LOW
+     &END CELL
+     &STRESS LOW
+     &END STRESS
+   &END PRINT
+   &MD
+    ENSEMBLE     NPT_F
+    STEPS        100000 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    TIMESTEP     1.0
+    TEMPERATURE  50
+    COMVEL_TOL   0.0E+00 #!! in unit of [bohr/au_t] 
+    &BAROSTAT
+      PRESSURE   -1600
+      TEMPERATURE 50
+      TIMECON 500
+      VIRIAL XY
+     &END BAROSTAT
+     &THERMOSTAT 
+      TYPE NOSE
+      REGION GLOBAL
+     &NOSE
+        LENGTH   3
+        MTS      2
+        TIMECON  100
+        YOSHIDA  3
+      &END NOSE
+     &END THERMOSTAT
+   &END MD
+   &CONSTRAINT
+     &FIXED_ATOMS
+       COMPONENTS_TO_FIX XYZ
+     &END FIXED_ATOMS
+   &END CONSTRAINT
+ &END MOTION
+
+
+ &FORCE_EVAL
+   METHOD        QS
+   STRESS_TENSOR ANALYTICAL
+   &DFT
+     BASIS_SET_FILE_NAME ./BASIS_MOLOPT
+     POTENTIAL_FILE_NAME ./GTH_POTENTIALS
+     &SCF
+      SCF_GUESS RESTART
+      EPS_SCF   1.0E-5 #5.0E-6 !!!!!!!!!!!!!!!!!!
+      EPS_DIIS  1.0E-1
+      MAX_SCF   100 #!!!!!!!!!!!!!!!!!!
+      CHOLESKY INVERSE
+      &OT                       T 
+        ALGORITHM               STRICT
+        IRAC_DEGREE             4
+        MAX_IRAC                50
+        ORTHO_IRAC              CHOL
+        EPS_IRAC                1.0000E-10
+        EPS_IRAC_QUICK_EXIT     1.0000E-05
+        EPS_IRAC_SWITCH         1.0000E-02
+        ON_THE_FLY_LOC          F
+        MINIMIZER               DIIS
+        SAFE_DIIS               T
+        N_DIIS                  5
+        LINESEARCH              2PNT
+        STEPSIZE                1.5000E-01
+        GOLD_TARGET             1.0000E-02
+        PRECONDITIONER          FULL_SINGLE_INVERSE
+        PRECOND_SOLVER          DEFAULT
+        ENERGY_GAP              1.0000E-01
+        EPS_TAYLOR              1.0000E-16
+        MAX_TAYLOR              4
+        ROTATION                F
+        ENERGIES                F
+      &END OT
+      &OUTER_SCF                T
+        TYPE                    NONE
+        OPTIMIZER               NONE
+        BISECT_TRUST_COUNT      10
+        EPS_SCF                 1.0E-05 #2.000E-07 !!!!!!!!!!!!!!!!!!
+        DIIS_BUFFER_LENGTH      3
+        EXTRAPOLATION_ORDER     3
+        MAX_SCF                 15
+        STEP_SIZE               5.000E-01
+      &END OUTER_SCF
+     &END SCF
+      &QS
+       EPS_DEFAULT          1.000E-10
+       EXTRAPOLATION        ASPC
+       EXTRAPOLATION_ORDER  3
+       METHOD               GPW
+#       MAP_CONSISTENT  #from cp2k8 this key word has been cancelled
+     &END QS
+     &MGRID
+       NGRIDS               5
+       CUTOFF               800
+       REL_CUTOFF           50
+     &END MGRID
+     &XC
+       DENSITY_CUTOFF               1.0000E-10
+       GRADIENT_CUTOFF              1.0000E-10
+       DENSITY_SMOOTH_CUTOFF_RANGE  0.0000E+00
+       TAU_CUTOFF                   1.0000E-10
+       FUNCTIONAL_ROUTINE           NEW
+       &XC_GRID
+         XC_SMOOTH_RHO              NONE
+         XC_DERIV                   PW
+         USE_FINER_GRID             F
+       &END XC_GRID
+      &XC_FUNCTIONAL
+        &LIBXC
+          FUNCTIONAL XC_GGA_X_RPW86
+        &END LIBXC
+        &VWN
+        &END VWN
+      &END XC_FUNCTIONAL
+       &XC_POTENTIAL
+         ENERGY                     NONE
+       &END XC_POTENTIAL
+      &vdW_POTENTIAL
+         DISPERSION_FUNCTIONAL NON_LOCAL
+         &NON_LOCAL
+            TYPE LMKLL
+            KERNEL_FILE_NAME ./vdW_kernel_table.dat
+            CUTOFF  80
+         &END NON_LOCAL
+       &END vdW_POTENTIAL
+     &END XC
+     &POISSON
+       POISSON_SOLVER  periodic
+       PERIODIC        xyz
+     &END POISSON
+   &END DFT
+######################################################################
+#                                                                    #
+######################################################################
+   &SUBSYS
+     &CELL
+A  40.8584178075  0.511065099    0.0            
+B  0.5075553609   40.4371612938  0.0 
+C  0.0            0.0            15.0
+       PERIODIC xyz
+       MULTIPLE_UNIT_CELL  1  1  1
+     &END CELL
+     &TOPOLOGY
+       MULTIPLE_UNIT_CELL   1  1  1
+       COORD_FILE_FORMAT XYZ
+       COORD_FILE_NAME   geometry.xyz
+     &END TOPOLOGY
+     &KIND H
+      BASIS_SET TZV2P-MOLOPT-GTH-q1
+      POTENTIAL GTH-PBE-q1
+     &END KIND
+     &KIND O
+      BASIS_SET TZV2P-MOLOPT-GTH-q6
+      POTENTIAL GTH-PBE-q6
+     &END KIND
+   &END SUBSYS
+ &END FORCE_EVAL
