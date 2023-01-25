@@ -1,0 +1,46 @@
+<simulation verbosity="high">
+    <output prefix="pimd">
+        <properties stride="200" filename="out">
+            [ step, time{picosecond}, temperature{kelvin}, conserved{electronvolt}, kinetic_cv{electronvolt}, potential{electronvolt}, pot_component_raw(0), volume, stress_cv{megapascal}, cell_abcABC]
+        </properties>
+        <trajectory filename="pos" stride="100" cell_units='angstrom' >
+            positions{angstrom}
+        </trajectory>
+        <properties stride="200" filename="kine">
+            [ step, kinetic_cv, kinetic_cv(H), kinetic_cv(O), kinetic_td, kinetic_td(H), kinetic_td(O), kinetic_md{electronvolt}]
+        </properties>
+        <checkpoint stride='100000' filename='chk'/>
+    </output>
+
+    <total_steps> 10000000 </total_steps>
+    <prng> <seed> port_num </seed> </prng>
+    <ffsocket name="lmp" mode="unix">
+        <address> localhost </address>
+    </ffsocket>
+    
+    <system>
+        <initialize nbeads="8">
+            <file mode="xyz" units="angstrom"> data.lmp.xyz </file>
+            <cell mode="manual" units="angstrom">
+                [ 30.4632, 0.0, 0.0, 0.0, 33.49824, 0.0, 0.0, 0.0, 15.0 ]
+            </cell>
+            <velocities mode="thermal" units="kelvin"> 300 </velocities>
+        </initialize>
+        <forces>
+            <force forcefield="lmp" weight="1.0"/>
+        </forces>
+        <motion mode="dynamics">
+            <dynamics mode="nvt">
+                <thermostat mode='pile_l'>
+                    <tau units='femtosecond'> 25 </tau>
+                    <pile_lambda> 0.2 </pile_lambda>
+                </thermostat>
+                <timestep units="femtosecond"> 0.25 </timestep>
+            </dynamics>
+            <fixcom> True </fixcom>
+        </motion>
+        <ensemble>
+            <temperature units="kelvin"> 300 </temperature>
+        </ensemble>
+    </system>
+</simulation>

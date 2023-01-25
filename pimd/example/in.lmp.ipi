@@ -1,0 +1,65 @@
+# modified by B.Lin 2022
+
+# ------------------------ Initialization ---------------------------- #
+units           metal
+dimension       3
+boundary        p p f
+atom_style      atomic
+processors      * * 1
+# -------------------------------------------------------------------- #
+
+# ----------------------- Atom definition ---------------------------- #
+include         data.mod
+# -------------------------------------------------------------------- #
+
+# ----------------------- Force fields ------------------------------- #
+include         pot.mod
+
+neighbor        2 bin
+neigh_modify    every 10 delay 0 check no
+# -------------------------------------------------------------------- #
+
+# ------------------- Initialized settings --------------------------- #
+variable        dt_timestep equal 0.00025
+variable        run_steps equal 4000000
+
+velocity	    all create 300 345352 mom yes rot yes dist gaussian
+
+thermo          1
+thermo_style    custom step atoms temp ke pe etotal press lx ly lz vol density pxx pyy
+
+fix             xx all momentum 1 linear 1 1 1 angular
+# -------------------------------------------------------------------- #
+
+# ----------------------- Wall settings ------------------------------ #
+reset_timestep  0
+
+timestep        ${dt_timestep}
+
+group           Hatom type 1
+group           Oatom type 2
+
+include         wall.mod
+fix             wallLj93zlo Oatom wall/lj93 zlo ${wallzlo} 0.1627 3.853 10 units box pbc no
+fix             wallLj93zhi Oatom wall/lj93 zhi ${wallzhi} 0.1627 3.853 10 units box pbc no
+
+dump            xyz all xyz 1000 water2d.xyz
+dump_modify     xyz element H O sort id
+
+dump            custom all custom 1000 custom.dump id type x y z element vx vy vz
+dump_modify     custom sort id element H O
+
+restart         50000 restart.*.ipi
+# -------------------------------------------------------------------- #
+
+# ----------------------------- i-PI MD ------------------------------ #
+fix             ipi all ipi localhost port_num unix
+run             4000000
+unfix           ipi
+# -------------------------------------------------------------------- #
+
+# ------------------------------- End -------------------------------- #
+write_data      data.ipi.end
+write_restart   restart.ipi.end
+# -------------------------------------------------------------------- #
+
