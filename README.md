@@ -30,6 +30,9 @@ cp2k-9.1 is used. The environment settings can be found in the file 'cp2k.setup'
 **LAMMPS**:
 https://www.lammps.org/  
 The executable LAMMPS pre-compiled in the DeePMD-kit was used.  
+**i-PI**:
+http://ipi-code.org/  
+i-PI-v2.4.0 is used.  
 
 * `aimd_cp2k`:
 Examples of AIMD simulations used to confirm the MLFF-MD results
