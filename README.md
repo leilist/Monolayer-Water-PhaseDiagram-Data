@@ -45,6 +45,8 @@ Examples of MD simulations with the NPT ensemble using the LAMMPS in DeePMD-kit 
 * `ti_lammps`:
 Examples of free-energy calculations with the thermodynamics integration method using the LAMMPS in DeePMD-kit based on the MLFF model.
 
+* `pimd`:
+Examples of PIMD (path-integral MD) using the open-source i-PI code and the LAMMPS in DeePMD-kit based on the MLFF model.
 
 
 
