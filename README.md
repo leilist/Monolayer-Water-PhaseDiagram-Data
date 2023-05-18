@@ -2,7 +2,7 @@
 
 This repository contains supplementary data supporting results of the paper:
 
-"Temperature-Pressure Phase Diagram of Confined Monolayer Water/Ice: Machine-learning Force Field at the First-Principle Accuracy"
+"Temperature-Pressure Phase Diagram of Confined Monolayer Water/Ice at the First-Principle Accuracy with a Machine-learning Force Field"
 
 Bo Lin, Jian Jiang, Xiao Cheng Zeng, Lei Li
 
